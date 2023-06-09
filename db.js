@@ -1,9 +1,13 @@
 import { Sequelize } from "sequelize";
 
 
-export const sequelize = new Sequelize('social_db', 'root', '9723impw', {
-    host: 'localhost',
-    dialect: 'mysql',
+export const sequelize = new Sequelize(
+        'social_db', 
+        'root', 
+        '9723impw', 
+    {
+        host: 'localhost',
+        dialect: 'mysql',
   });
 
 

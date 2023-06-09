@@ -4,10 +4,13 @@ import express from "express";
 import { User } from "../models/userModel.js";
 import pkg from "bcrypt";
 import  jwt  from "jsonwebtoken";
+import { config } from "dotenv";
+
 
 
 
 const router = express.Router();
+config();
 
 // create a user
 router.post('/register', async (req, res)=> {
@@ -43,7 +46,7 @@ router.post('/login', async (req, res) => {
     if(!checkPassword) 
         return res.status(400).json({message: 'Invalid credentials'}); 
 
-    const accessToken = jwt.sign({id: user.id}, "secretKey");
+    const accessToken = jwt.sign({id: user.id}, 'process.env.SSECRET_KEY', { expiresIn: '5h' });
 
     const userData = {
         fullName: user.fullName,
@@ -51,27 +54,46 @@ router.post('/login', async (req, res) => {
         username: user.username,
         accessToken: accessToken
     }
-    res.cookie("accessToken", accessToken, {
-        httpOnly: true
-    }).status(200).json({data: userData});
+    res.status(200).json({data: userData});
 });
 
+
+// authorization logic
+export function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+  
+    if (token === null) {
+      return res.sendStatus(401);
+    }
+  
+    jwt.verify(token, 'environ.SECRET_KEY', (err, user) => {
+      if (err) {
+        return res.sendStatus(403);
+      }
+  
+      req.user = user;
+      next();
+    });
+}
 
 
 // logout the user
-router.get('/logout', (req, res) => {
-    res.clearCookie('accessToken', {
-        secure: true,
-        sameSite: 'none'
-    }).status(200).json({message: 'User has benn logout'});
+router.get('/logout', authenticateToken, (req, res) => {
+    res.send('Logout successful');
 });
 
 
 
-
-router.get('/:userId', async (req, res) =>{
-    const user = await User.findOne(req.params.userId);
-})
+// get user information
+router.get('/detail', authenticateToken, async (req, res) =>{
+    const user = await User.findOne(req.id);
+    if(user===null){
+        return res.status(404).send({message: 'User not found'});
+    }
+    return res.status(200).json(user);
+    
+});
 
 
 export default router
