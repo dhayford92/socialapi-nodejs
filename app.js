@@ -1,5 +1,6 @@
 import express from 'express';
 import userRouter from './routers/users.js';
+import postRouter from './routers/posts.js';
 import { connectDb } from './db.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -14,6 +15,7 @@ app.use(cookieParser())
 
 //include routers
 app.use('/api/user', userRouter)
+app.use('/api/post', postRouter)
 
 
 //starterengine

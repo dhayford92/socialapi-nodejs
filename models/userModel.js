@@ -28,4 +28,10 @@ export const User = sequelize.define('users', {
     },
 });
 
+
+// // -- Relations
+// User.hasOne(Post, { foreignKey: 'user_id' });
+
+
+
 sequelize.sync()

@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
     if(!checkPassword) 
         return res.status(400).json({message: 'Invalid credentials'}); 
 
-    const accessToken = jwt.sign({id: user.id}, 'process.env.SSECRET_KEY', { expiresIn: '5h' });
+    const accessToken = jwt.sign({id: user.id}, 'securityKey', { expiresIn: '5h' });
 
     const userData = {
         fullName: user.fullName,
@@ -64,12 +64,12 @@ export function authenticateToken(req, res, next) {
     const token = authHeader && authHeader.split(' ')[1];
   
     if (token === null) {
-      return res.sendStatus(401);
+      return res.status(401).json({ error: 'Missing authorization header' });
     }
   
-    jwt.verify(token, 'environ.SECRET_KEY', (err, user) => {
+    jwt.verify(token, 'securityKey', (err, user) => {
       if (err) {
-        return res.sendStatus(403);
+        return res.status(403).json({ message: err.message });
       }
   
       req.user = user;
