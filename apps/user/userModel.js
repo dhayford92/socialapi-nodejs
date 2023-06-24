@@ -1,5 +1,5 @@
 import {DataTypes} from 'sequelize'
-import { sequelize } from '../db.js';
+import { sequelize } from '../../db.js';
 
 
 export const User = sequelize.define('users', {
@@ -30,8 +30,4 @@ export const User = sequelize.define('users', {
 
 
 // // -- Relations
-// User.hasOne(Post, { foreignKey: 'user_id' });
-
-
-
 sequelize.sync()

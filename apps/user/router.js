@@ -1,16 +1,18 @@
 // Urls or Routers
 
 import express from "express";
-import { User } from "../models/userModel.js";
+import { User } from "./userModel.js";
 import pkg from "bcrypt";
 import  jwt  from "jsonwebtoken";
 import { config } from "dotenv";
-
-
+import { authenticateToken, uploadImage } from "../../utils.js";
 
 
 const router = express.Router();
 config();
+
+
+
 
 // create a user
 router.post('/register', async (req, res)=> {
@@ -18,18 +20,19 @@ router.post('/register', async (req, res)=> {
     if(existUser !== null){
         return res.status(409).json({message: 'User already registered'});
     }
+
     const salt = pkg.genSaltSync(10);
     const hashpassword = pkg.hashSync(req.body.password, salt);
 
-    await User.create({
-        fullName: req.body.fullName, username: req.body.username, 
-        password: hashpassword, email: req.body.email
-    }).then((data)=>{
-        return res.status(201).json({message: "User created successfully"});
+    let user = await User.create({
+        fullName: req.body.fullName, 
+        username: req.body.username, 
+        password: hashpassword, 
+        email: req.body.email,
     }).catch((err)=>{
-        return res.status(500).json({message: err});
+        return res.status(500).json({message: `${err}`});
     });
-
+    return res.status(201).json({message: `Hello ${user.fullName}, Welcome to SocialMed`});
 })
 
 
@@ -58,25 +61,6 @@ router.post('/login', async (req, res) => {
 });
 
 
-// authorization logic
-export function authenticateToken(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-  
-    if (token === null) {
-      return res.status(401).json({ error: 'Missing authorization header' });
-    }
-  
-    jwt.verify(token, 'securityKey', (err, user) => {
-      if (err) {
-        return res.status(403).json({ message: err.message });
-      }
-  
-      req.user = user;
-      next();
-    });
-}
-
 
 // logout the user
 router.get('/logout', authenticateToken, (req, res) => {
@@ -87,13 +71,39 @@ router.get('/logout', authenticateToken, (req, res) => {
 
 // get user information
 router.get('/detail', authenticateToken, async (req, res) =>{
-    const user = await User.findOne(req.id);
+    const user = await User.findOne({
+        where: {id: req.id['id']}
+    }).catch((err)=> res.status(500).send({message: err}));
+
     if(user===null){
         return res.status(404).send({message: 'User not found'});
     }
     return res.status(200).json(user);
     
 });
+
+
+// get user information
+router.put('/add-profile', authenticateToken, async (req, res) =>{
+    
+    if (!req.files || Object.keys(req.files).length === 0) {
+        return res.status(400).send('No files were uploaded.');
+    }
+
+    const profile = uploadImage(req.files.profile, './mediafiles/users/');
+
+    const user = await User.update({ profilePc: profile}, {
+        where: {id: req.id['id']}
+      }).catch((err)=>{
+        return res.status(404).send({message: err});
+      });
+
+    if(user===null){
+        return res.status(404).send({message: 'User not found'});
+    }
+    return res.status(200).json({message: 'Account updated successfully'});
+});
+
 
 
 export default router

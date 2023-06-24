@@ -1,14 +1,9 @@
 import {DataTypes} from 'sequelize'
-import { sequelize } from '../db.js';
-import { User } from './userModel.js';
+import { sequelize } from '../../db.js';
+import { User } from '../user/userModel.js';
 
 
 export const Post = sequelize.define('posts', {
-    user_id: {
-        type: DataTypes.INTEGER,
-        references: { model: User },
-        required: true,
-      },
     desc: {
         type: DataTypes.STRING,
         allowNull: true
@@ -18,6 +13,10 @@ export const Post = sequelize.define('posts', {
         allowNull: true
     }});
 
+
+// --- relations between users and posts
+User.hasMany(Post)
+Post.belongsTo(User)
 
 
 // Relationships model
